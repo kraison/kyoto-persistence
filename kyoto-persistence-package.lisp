@@ -28,4 +28,13 @@
    #:set-btree
    #:get-btree
    #:rem-btree
+   #:map-btree
+
+   #:klist-free
+   #:klist-remove
+   #:klist-next
+   #:klist-prev
+   #:klist-nth
+   #:klist-has-value?
+   #:map-klist
    ))

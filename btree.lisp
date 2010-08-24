@@ -25,3 +25,5 @@
 (defun rem-btree (btree key &optional value)
   (delete-object (btree-db btree) key :value value))
 
+(defun map-btree (btree fn &key collect?)
+  )

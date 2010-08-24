@@ -85,12 +85,5 @@
 	   (pointer-search value-ptr value-size (klist-pointer klist) (klist-size klist)))
       (when (pointerp value-ptr) (foreign-free value-ptr)))))
 
-#|
-	(dotimes (i (length (klist-items klist)))
-    (when (equal value (aref (klist-items klist) i))
-      (return-from klist-has-value? i)))
-  (when (< (klist-offset klist) (klist-size klist))
-    (loop until (= (klist-offset klist) (klist-size klist)) do
-	 (if (equal value (klist-next klist))
-	     (return-from klist-has-value? (klist-record klist))))))
-|#
+(defmethod map-klist ((klist klist) fn &key collect?)
+  )
