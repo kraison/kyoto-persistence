@@ -11,11 +11,13 @@
   (close-store (btree-db btree)))
 
 (defun set-btree (btree key value)
-  (store-object (btree-db btree) key value))
+  (store-object (btree-db btree) key value :mode (if (btree-duplicates-allowed? btree)
+						     :concat
+						     :keep)))
 
 (defun get-btree (btree key)
   (lookup-object (btree-db btree) key))
 
-(defun rem-btree (btree key)
-  (delete-object (db-btree btree) key))
+(defun rem-btree (btree key &optional value)
+  (delete-object (db-btree btree) key value))
 
