@@ -14,6 +14,7 @@
 	   (let ((l (get-btree btree key1)))
 	     ;;(dump-pointer (klist-pointer l) (klist-size l))
 	     (format t "~A: ~A~%" 300 (klist-nth l 300))
+	     (format t "has-value V-1-5001? ~A~%" (klist-has-value? l "V-1-5001"))
 	     (dotimes (i 10000)
 	       (klist-next l)
 	       (when (= 0 (mod i 1000))

@@ -141,6 +141,16 @@
     (setf (mem-aref ptr :unsigned-char 0) +double-float+)
     (values ptr len)))
 
+(defmethod serialize ((timestamp timestamp))
+  (multiple-value-bind (ptr len) (serialize (timestamp-to-universal timestamp))
+    (setf (mem-aref ptr :unsigned-char 0) +timestamp+)
+    (values ptr len)))
+
+(defmethod deserialize-help ((become (eql +timestamp+)) pointer header-length data-length)
+  (declare (type integer become header-length data-length))
+  (let ((universal-time +timestamp+ pointer header-length data-length))
+    (universal-to-timestamp universal-time)))
+
 (defmethod deserialize-help ((become (eql +ratio+)) pointer header-length data-length)
   (declare (type integer become header-length data-length))
   (let ((values (deserialize-all-subseqs pointer (+ header-length data-length) header-length)))
@@ -281,6 +291,7 @@ the length of the object."
 			     (length symbol-name) (length package-encoded-length)))
 		(aref package-name i)))
 	(values vec (+ 1 (length encoded-length) size)))))
+
 
 #|
 (defmethod deserialize-help ((become (eql +list+)) pointer header-length data-length)

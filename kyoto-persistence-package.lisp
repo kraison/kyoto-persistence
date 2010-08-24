@@ -37,4 +37,9 @@
    #:klist-nth
    #:klist-has-value?
    #:map-klist
+
+   #:serialization-error
+   #:deserialization-error
+   #:persistence-error
+   #:transaction-error
    ))
