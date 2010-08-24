@@ -18,8 +18,10 @@
   :components ((:file "uuid")
 	       (:file "kyoto-persistence-package" :depends-on ("uuid"))
 	       (:file "constants" :depends-on ("kyoto-persistence-package"))
-	       (:file "serialize" :depends-on ("constants"))
-	       (:file "disk-storage" :depends-on ("serialize"))
+	       (:file "utilities" :depends-on ("constants"))
+	       (:file "serialize" :depends-on ("utilities"))
+	       (:file "kyoto-list" :depends-on ("serialize"))
+	       (:file "disk-storage" :depends-on ("kyoto-list"))
 	       (:file "phash" :depends-on ("disk-storage"))
 	       (:file "btree" :depends-on ("disk-storage"))))
 

@@ -1,6 +1,6 @@
 (in-package #:kyoto-persistence)
 
-(declaim (optimize (speed 3)))
+;(declaim (optimize (speed 3)))
 
 (defgeneric serialize (object))
 (defgeneric serialize-special (object serialize-as))
@@ -78,7 +78,7 @@
   "Decode a UUID."
   (declare (type integer become))
   (declare (ignore header-length data-length))
-  (uuid:pointer-to-uuid pointer 2))
+  (values (uuid:pointer-to-uuid pointer 2) (+ header-length data-length)))
 
 (defmethod serialize ((uuid uuid:uuid))
   "Encode a UUID."
@@ -90,13 +90,14 @@
   (let ((int 0))
     (dotimes (i data-length)
       (setq int (dpb (mem-aref pointer :unsigned-char (+ header-length i)) (byte 8 (* i 8)) int)))
-    int))
+    (values int (+ header-length data-length))))
  
 (defmethod deserialize-help ((become (eql +negative-integer+)) pointer header-length data-length)
   "Decode a negative integer."
   (declare (type integer data-length header-length))
   (declare (ignore become))
-  (- (deserialize-help +positive-integer+ pointer header-length data-length)))
+  (values (- (deserialize-help +positive-integer+ pointer header-length data-length))
+	  (+ header-length data-length)))
 
 (defmethod compute-serialized-length ((int integer))
   (let ((n-bytes (ceiling (integer-length int) 8)))
@@ -121,7 +122,8 @@
 (defmethod deserialize-help ((become (eql +single-float+)) pointer header-length data-length)
   (declare (type integer become header-length data-length))
   (ieee-floats:decode-float32 
-   (deserialize-help +positive-integer+ pointer header-length data-length)))
+   (values (deserialize-help +positive-integer+ pointer header-length data-length)
+	   (+ header-length data-length))))
 
 (defmethod serialize ((float single-float))
   (multiple-value-bind (ptr len) (serialize (ieee-floats:encode-float32 float))
@@ -131,7 +133,8 @@
 (defmethod deserialize-help ((become (eql +double-float+)) pointer header-length data-length)
   (declare (type integer become header-length data-length))
   (ieee-floats:decode-float64
-   (deserialize-help +positive-integer+ pointer header-length data-length)))
+   (values (deserialize-help +positive-integer+ pointer header-length data-length)
+	   (+ header-length data-length))))
 
 (defmethod serialize ((float double-float))
   (multiple-value-bind (ptr len) (serialize (ieee-floats:encode-float64 float))
@@ -141,7 +144,7 @@
 (defmethod deserialize-help ((become (eql +ratio+)) pointer header-length data-length)
   (declare (type integer become header-length data-length))
   (let ((values (deserialize-all-subseqs pointer (+ header-length data-length) header-length)))
-    (/ (first values) (second values))))
+    (values (/ (first values) (second values)) (+ header-length data-length))))
 
 (defmethod serialize ((ratio ratio))
   (let* ((numerator (numerator ratio))
@@ -178,7 +181,7 @@
   (let ((int 0))
     (dotimes (i data-length)
       (setq int (dpb (mem-aref pointer :unsigned-char (+ header-length i)) (byte 8 (* i 8)) int)))
-    (code-char int)))
+    (values (code-char int) (+ header-length data-length))))
 
 (defmethod serialize ((char character))
   "Encode a Unicode character."
@@ -198,7 +201,7 @@
 			   :element-type '(unsigned-byte 8))))
     (dotimes (i data-length)
       (setf (aref bytes i) (mem-aref pointer :unsigned-char (+ i header-length))))
-    (sb-ext:octets-to-string bytes)))
+    (values (sb-ext:octets-to-string bytes) (+ header-length data-length))))
 
 (defmethod serialize ((string string))
   "Unicode aware string encoding. Not as efficient as it could be: creates 2 arrays: one to get 
@@ -217,19 +220,20 @@ the length of the object."
     (values vec (+ 1 length-of-encoded-length vector-length))))
 
 (defmethod deserialize-help ((become (eql +t+)) pointer header-length data-length)
-  (declare (type integer become))
-  (declare (ignore pointer header-length data-length))
-  t)
+  (declare (type integer become header-length data-length))
+  (declare (ignore pointer))
+  (values t (+ header-length data-length)))
 
 (defmethod deserialize-help ((become (eql +null+)) pointer header-length data-length)
-  (declare (type integer become))
-  (declare (ignore pointer header-length data-length))
-  nil)
+  (declare (type integer become header-length data-length))
+  (declare (ignore pointer))
+  (values nil (+ header-length data-length)))
 
 (defmethod deserialize-help ((become (eql +symbol+)) pointer header-length data-length)
   (declare (type integer become header-length data-length))
   (let ((values (deserialize-all-subseqs pointer (+ header-length data-length) header-length)))
-    (intern (first values) (find-package (second values)))))
+    (values (intern (first values) (find-package (second values)))
+	    (+ header-length data-length))))
 
 (defmethod serialize ((symbol symbol))
   (or (and (null symbol) 
