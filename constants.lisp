@@ -23,16 +23,3 @@
 (defconstant +list+ 16)
 (defconstant +vector+ 17)
 
-(define-condition serialization-error (error)
-  ((instance :initarg :instance)
-   (reason :initarg :reason))
-  (:report (lambda (error stream)
-             (with-slots (instance reason) error
-               (format stream "Serialization failed for ~a because of ~a." instance reason)))))
-
-(define-condition deserialization-error (error)
-  ((instance :initarg :instance)
-   (reason :initarg :reason))
-  (:report (lambda (error stream)
-             (with-slots (instance reason) error
-               (format stream "Deserialization failed for ~a because of ~a." instance reason)))))
