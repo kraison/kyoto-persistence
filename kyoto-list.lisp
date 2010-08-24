@@ -71,7 +71,7 @@
   (if (<= nth (klist-record klist))
       (aref (klist-items klist) nth)
       (progn
-	(loop until (= nth (klist-record klist)) do
+	(loop for i from (klist-record klist) to nth do
 	     (when (null (klist-next klist))
 	       (error "~A is not a valid offset for a klist of size ~A" 
 		      nth (1+ (klist-record klist)))))
