@@ -18,22 +18,22 @@
 
 (defmethod klist-free ((klist klist))
   (when (and (pointerp (klist-pointer klist)) (not (null-pointer-p (klist-pointer klist))))
-    (foreign-free (klist-pointer klist)))
+    (kcfree (klist-pointer klist)))
   (when (and (pointerp (klist-pointer klist)) (not (null-pointer-p (klist-key klist))))
-    (foreign-free (klist-key klist))))
+    (kcfree (klist-key klist))))
 
 (defmethod klist-remove ((klist klist) value)
   (let (value-ptr value-size new-ptr new-len)
     (unwind-protect
 	 (progn
 	   (multiple-value-setq (value-ptr value-size) (serialize value))
-	   (dump-pointer value-ptr value-size)
+	   ;;(dump-pointer value-ptr value-size)
 	   (multiple-value-setq (new-ptr new-len) 
 	     (extract-subseq (klist-pointer klist) (klist-size klist) value-ptr value-size))
 	   (format t "extract-subseq returned ~A / ~A~%" new-ptr new-len)
 	   (when (and (pointerp new-ptr) new-len)
 	     (when (not (pointer-eq new-ptr (klist-pointer klist)))
-	       (foreign-free (klist-pointer klist))
+	       (kcfree (klist-pointer klist))
 	       (setf (klist-items klist) (make-array 0 :adjustable t :fill-pointer t)
 		     (klist-size klist) new-len
 		     (klist-pointer klist) new-ptr
@@ -43,9 +43,9 @@
 			     (klist-key klist) (klist-key-size klist)
 			     value-ptr value-size :mode :replace))))
       (progn
-	(when (pointerp value-ptr) (foreign-free value-ptr))
+	(when (pointerp value-ptr) (kcfree value-ptr))
 	(when (and (pointerp new-ptr) (not (pointer-eq new-ptr (klist-pointer klist))))
-	  (foreign-free new-ptr)))))
+	  (kcfree new-ptr)))))
   klist)
 
 (defmethod klist-next ((klist klist))
@@ -82,7 +82,7 @@
 	 (progn
 	   (multiple-value-setq (value-ptr value-size) (serialize value))
 	   (pointer-search value-ptr value-size (klist-pointer klist) (klist-size klist)))
-      (when (pointerp value-ptr) (foreign-free value-ptr)))))
+      (when (pointerp value-ptr) (kcfree value-ptr)))))
 
 (defmethod map-klist ((fn function) (klist klist) &key collect?)
   (let* ((count 0))

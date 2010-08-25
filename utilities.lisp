@@ -1,5 +1,10 @@
 (in-package #:kyoto-persistence)
 
+(defun proper-listp (x)
+  "Is x a proper (non-dotted) list?"
+  (or (null x)
+      (and (consp x) (proper-listp (rest x)))))
+
 (defun pointer-search (subseq subseq-len seq seq-len)
   (dotimes (i (- seq-len subseq-len))
     (loop for j from 0 to subseq-len do

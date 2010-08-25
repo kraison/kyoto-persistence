@@ -7,7 +7,6 @@
   (close-store phash))
 
 (defun set-phash (phash key value &key (mode :keep))
-  (format t "phash storing ~A / ~A~%" key value)
   (store-object phash key value :mode mode))
 
 (defun get-phash (phash key)
@@ -36,11 +35,11 @@ key and value."
 			  (funcall func key val)))
 		    (iter-next cursor))
 	       (progn
-		 (when (pointerp key-ptr) (foreign-free key-ptr))
-		 (when (pointerp key-size) (foreign-free key-size))
+		 (when (pointerp key-ptr) (kcfree key-ptr))
+		 (when (pointerp key-size) (kcfree key-size))
 		 ;; This is commented out because it causes a segfault.
-		 ;;(when (pointerp val-ptr) (foreign-free val-ptr))
-		 (when (pointerp val-size) (foreign-free val-size))))))
+		 (when (pointerp val-ptr) (kcfree val-ptr))
+		 (when (pointerp val-size) (kcfree val-size))))))
 	(if collect? (nreverse result)))
     (error (condition)
       (error 'persistence-error 

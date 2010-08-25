@@ -12,6 +12,13 @@
    #:lookup-objects
    #:delete-object
    #:with-transaction
+   #:*in-transaction-p*
+   #:dbm-rollback
+   #:dbm-commit
+   #:dbm-begin
+   #:kcmalloc
+   #:kcfree
+   #:dump-pointer
 
    #:serialize
    #:serialize-special
@@ -40,6 +47,7 @@
    #:klist-nth
    #:klist-has-value?
    #:map-klist
+   #:klist?
 
    #:serialization-error
    #:deserialization-error

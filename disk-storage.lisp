@@ -24,13 +24,14 @@ database. If its suffix is .kcd, the database will be a directory hash database.
   (handler-case
       (let (key-ptr key-size value-ptr value-size)
 	(unwind-protect
-	     (progn
+	     (with-transaction (db)
 	       (multiple-value-setq (key-ptr key-size) (funcall serializer key))
 	       (multiple-value-setq (value-ptr value-size) (dbm-get-fast db key-ptr key-size))
-	       (deserialize value-ptr value-size))
+	       (when (and value-ptr (not (null-pointer-p value-ptr)))
+		 (deserialize value-ptr value-size)))
 	  (progn
-	    (when (pointerp key-ptr) (foreign-free key-ptr))
-	    (when (pointerp value-ptr) (foreign-free value-ptr)))))
+	    (when (pointerp key-ptr) (kcfree key-ptr))
+	    (when (pointerp value-ptr) (kcfree value-ptr)))))
     (error (condition)
       (error 'persistence-error :instance (list :db db :key key) :reason condition))))    
 
@@ -39,7 +40,7 @@ database. If its suffix is .kcd, the database will be a directory hash database.
 pointers in this structure with klist-free!"
   (let (key-ptr key-size value-ptr value-size)
     (handler-case
-	(progn
+	(with-transaction (db)
 	  (multiple-value-setq (key-ptr key-size) (funcall serializer key))
 	  (multiple-value-setq (value-ptr value-size) (dbm-get-fast db key-ptr key-size))
 	  (if (null-pointer-p value-ptr)
@@ -47,13 +48,14 @@ pointers in this structure with klist-free!"
 	      (make-klist 
 	       :db db :key key-ptr :key-size key-size :pointer value-ptr :size value-size)))
     (error (condition)
-      (when (pointerp key-ptr) (foreign-free key-ptr))
-      (when (pointerp value-ptr) (foreign-free value-ptr))
+      (when (pointerp key-ptr) (kcfree key-ptr))
+      (when (pointerp value-ptr) (kcfree value-ptr))
       (error 'persistence-error :instance (list :db db :key key) :reason condition)))))
 
 (defun store-object (db key value &key (mode :keep) (key-serializer #'serialize) 
 		     (value-serializer #'serialize))
   "Save a key / value pair in the specified kyoto cabinet store."
+  (format t "Storing ~A / ~A~%" key value)
   (handler-case
       (let (key-ptr key-size value-ptr value-size)
 	(unwind-protect
@@ -62,11 +64,15 @@ pointers in this structure with klist-free!"
 	       (multiple-value-setq (value-ptr value-size) (funcall value-serializer value))
 	       (dump-pointer key-ptr key-size)
 	       (dump-pointer value-ptr value-size)
-	       (dbm-put-fast db key-ptr key-size value-ptr value-size :mode mode)
-	       t)
+	       (with-transaction (db)
+		 (dbm-put-fast db key-ptr key-size value-ptr value-size :mode mode))
+	       (format t "Done storing ~A / ~A~%" key value))
 	  (progn
-	    (when (pointerp key-ptr) (foreign-free key-ptr))
-	    (when (pointerp value-ptr) (foreign-free value-ptr)))))
+	    (format t "Releasing key ptr: ~A~%" (pointer-address key-ptr))
+	    (when (pointerp key-ptr) (kcfree key-ptr))
+	    (when (pointerp value-ptr)
+	      (format t "Releasing val ptr: ~A~%" (pointer-address value-ptr))
+	      (kcfree value-ptr)))))
     (error (condition)
       (error 'persistence-error 
 	     :instance (list :db db :key key :value value :mode mode) 
@@ -80,9 +86,10 @@ pointers in this structure with klist-free!"
 	    (unwind-protect
 		 (progn
 		   (multiple-value-setq (key-ptr key-size) (funcall key-serializer key))
-		   (dbm-remove-fast key-ptr key-size))
+		   (with-transaction (db)
+		     (dbm-remove-fast key-ptr key-size)))
 	      (progn
-		(when (pointerp key-ptr) (foreign-free key-ptr)))))
+		(when (pointerp key-ptr) (kcfree key-ptr)))))
 	  (with-transaction (db)
 	    (let ((klist (lookup-objects db key :serializer key-serializer)))
 	      (when (klist? klist)

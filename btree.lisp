@@ -31,3 +31,25 @@
 
 (defun map-btree (btree fn &key collect?)
   )
+
+(defmacro with-transaction ((db) &body body)
+  "Evaluates BODY in the context of a transaction on DB. If no
+transaction is in progress, a new one is started. If a transaction is
+already in progress, BODY is evaluated in its context. If an error
+occurs, the transaction will rollback, otherwise it will commit."
+  (let ((success (gensym)))
+    `(let ((,success nil))
+       (flet ((atomic-op ()
+                ,@body))
+         (if *in-transaction-p*
+             (atomic-op)
+             (unwind-protect
+                  (let ((*in-transaction-p* t))
+                    (prog2
+                        (dbm-begin (if (btree? ,db) (btree-db ,db) ,db))
+                        (atomic-op)
+                      (setf ,success t)))
+               (if ,success
+                   (dbm-commit (if (btree? ,db) (btree-db ,db) ,db))
+                   (dbm-rollback (if (btree? ,db) (btree-db ,db) ,db)))))))))
+
