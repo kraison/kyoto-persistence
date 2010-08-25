@@ -8,7 +8,7 @@
 (defgeneric deserialize (object size))
 (defgeneric deserialize-help (become object header-length data-length))
 (defgeneric deserialize-subseq (pointer header-length data-length offset))
-(defgeneric make-serialized-key (object))
+(defgeneric make-serialized-key (key-type object))
 
 (let ((length-table (make-hash-table :synchronized t)))
   (defun encode-length (int)
@@ -74,6 +74,11 @@
   (multiple-value-bind (data-length header-length) (extract-length pointer)
     (deserialize-help (mem-aref pointer :unsigned-char 0) pointer header-length data-length)))
 
+(defmethod make-serialized-key (key-type object)
+  (multiple-value-bind (key-ptr key-size) (serialize object)
+    (setf (mem-aref key-ptr :unsigned-char 0) key-type)
+    (values key-ptr key-size)))
+
 (defmethod deserialize-help ((become (eql +uuid+)) pointer header-length data-length)
   "Decode a UUID."
   (declare (type integer become))
@@ -130,16 +135,16 @@
     (setf (mem-aref ptr :unsigned-char 0) +single-float+)
     (values ptr len)))
 
+(defmethod serialize ((float double-float))
+  (multiple-value-bind (ptr len) (serialize (ieee-floats:encode-float64 float))
+    (setf (mem-aref ptr :unsigned-char 0) +double-float+)
+    (values ptr len)))
+
 (defmethod deserialize-help ((become (eql +double-float+)) pointer header-length data-length)
   (declare (type integer become header-length data-length))
   (ieee-floats:decode-float64
    (values (deserialize-help +positive-integer+ pointer header-length data-length)
 	   (+ header-length data-length))))
-
-(defmethod serialize ((float double-float))
-  (multiple-value-bind (ptr len) (serialize (ieee-floats:encode-float64 float))
-    (setf (mem-aref ptr :unsigned-char 0) +double-float+)
-    (values ptr len)))
 
 (defmethod serialize ((timestamp timestamp))
   (multiple-value-bind (ptr len) (serialize (timestamp-to-universal timestamp))
@@ -148,8 +153,9 @@
 
 (defmethod deserialize-help ((become (eql +timestamp+)) pointer header-length data-length)
   (declare (type integer become header-length data-length))
-  (let ((universal-time +timestamp+ pointer header-length data-length))
-    (universal-to-timestamp universal-time)))
+  (let ((universal-time (deserialize-help +positive-integer+ pointer header-length data-length)))
+    (values (universal-to-timestamp universal-time)
+	    (+ header-length data-length))))
 
 (defmethod deserialize-help ((become (eql +ratio+)) pointer header-length data-length)
   (declare (type integer become header-length data-length))

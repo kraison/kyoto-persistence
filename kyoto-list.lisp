@@ -68,13 +68,12 @@
     (aref (klist-items klist) (1- (klist-record klist)))))
 
 (defmethod klist-nth ((klist klist) (nth integer))
-  (if (<= nth (klist-record klist))
+  (if (< nth (klist-record klist))
       (aref (klist-items klist) nth)
       (progn
 	(loop for i from (klist-record klist) to nth do
 	     (when (null (klist-next klist))
-	       (error "~A is not a valid offset for a klist of size ~A" 
-		      nth (1+ (klist-record klist)))))
+	       (return-from klist-nth nil)))
 	(aref (klist-items klist) nth))))
 
 (defmethod klist-has-value? ((klist klist) value)
@@ -85,5 +84,20 @@
 	   (pointer-search value-ptr value-size (klist-pointer klist) (klist-size klist)))
       (when (pointerp value-ptr) (foreign-free value-ptr)))))
 
-(defmethod map-klist ((klist klist) fn &key collect?)
-  )
+(defmethod map-klist ((fn function) (klist klist) &key collect?)
+  (let* ((count 0))
+    (if collect?
+	(let ((result nil))
+	  (loop 
+	     for item = (klist-nth klist count)
+	     while (not (null item)) do
+	       (push (funcall fn item) result)
+	       (incf count))
+	  (nreverse result))
+	(progn
+	  (loop 
+	     for item = (klist-nth klist count)
+	     while (not (null item)) do
+	       (funcall fn item)
+	       (incf count))
+	  nil))))

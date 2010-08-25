@@ -1,14 +1,17 @@
 (in-package #:cl-user)
 
 (defpackage #:kyoto-persistence
-  (:use #:cl #:cffi #:kyoto-cabinet #:kyoto-cabinet-ffi)
+  (:use #:cl #:cffi #:kyoto-cabinet #:kyoto-cabinet-ffi #:local-time)
   (:export 
+   #:def-persistent-class
+
    #:open-store
    #:close-store
    #:store-object
    #:lookup-object
    #:lookup-objects
    #:delete-object
+   #:with-transaction
 
    #:serialize
    #:serialize-special

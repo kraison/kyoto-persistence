@@ -60,6 +60,8 @@ pointers in this structure with klist-free!"
 	     (progn
 	       (multiple-value-setq (key-ptr key-size) (funcall key-serializer key))
 	       (multiple-value-setq (value-ptr value-size) (funcall value-serializer value))
+	       (dump-pointer key-ptr key-size)
+	       (dump-pointer value-ptr value-size)
 	       (dbm-put-fast db key-ptr key-size value-ptr value-size :mode mode)
 	       t)
 	  (progn

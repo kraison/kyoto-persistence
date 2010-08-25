@@ -24,6 +24,8 @@
 	       (:file "kyoto-list" :depends-on ("serialize"))
 	       (:file "disk-storage" :depends-on ("kyoto-list"))
 	       (:file "phash" :depends-on ("disk-storage"))
-	       (:file "btree" :depends-on ("disk-storage"))))
+	       (:file "btree" :depends-on ("disk-storage"))
+	       ;;(:file "mop" :depends-on ("btree" "phash"))
+	       ))
 
 
