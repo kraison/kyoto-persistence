@@ -44,7 +44,7 @@ pointers in this structure with klist-free!"
 	  (multiple-value-setq (key-ptr key-size) (funcall serializer key))
 	  (multiple-value-setq (value-ptr value-size) (dbm-get-fast db key-ptr key-size))
 	  ;;(dump-pointer value-ptr value-size)
-	  (if (null-pointer-p value-ptr)
+	  (if (or (null value-ptr) (null-pointer-p value-ptr))
 	      nil
 	      (make-klist 
 	       :db db :key key-ptr :key-size key-size :pointer value-ptr :size value-size)))
@@ -88,13 +88,14 @@ pointers in this structure with klist-free!"
 		 (progn
 		   (multiple-value-setq (key-ptr key-size) (funcall key-serializer key))
 		   (with-transaction (db)
-		     (dbm-remove-fast key-ptr key-size)))
+		     (dbm-remove-fast db key-ptr key-size)))
 	      (progn
 		(when (pointerp key-ptr) (kcfree key-ptr)))))
 	  (with-transaction (db)
 	    (let ((klist (lookup-objects db key :serializer key-serializer)))
 	      (when (klist? klist)
-		(klist-remove klist value)))))
+		(klist-remove klist value value-serializer)
+		(klist-free klist)))))
     (error (condition)
       (error 'persistence-error 
 	     :instance (list :db db :key key :value value) :reason condition))))

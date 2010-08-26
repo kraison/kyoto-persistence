@@ -22,11 +22,11 @@
   (when (and (pointerp (klist-pointer klist)) (not (null-pointer-p (klist-key klist))))
     (kcfree (klist-key klist))))
 
-(defmethod klist-remove ((klist klist) value)
+(defmethod klist-remove ((klist klist) value &optional (serializer #'serialize))
   (let (value-ptr value-size new-ptr new-len)
     (unwind-protect
 	 (progn
-	   (multiple-value-setq (value-ptr value-size) (serialize value))
+	   (multiple-value-setq (value-ptr value-size) (funcall serializer value))
 	   ;;(dump-pointer value-ptr value-size)
 	   (multiple-value-setq (new-ptr new-len) 
 	     (extract-subseq (klist-pointer klist) (klist-size klist) value-ptr value-size))
