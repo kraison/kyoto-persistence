@@ -43,6 +43,7 @@ pointers in this structure with klist-free!"
 	(with-transaction (db)
 	  (multiple-value-setq (key-ptr key-size) (funcall serializer key))
 	  (multiple-value-setq (value-ptr value-size) (dbm-get-fast db key-ptr key-size))
+	  ;;(dump-pointer value-ptr value-size)
 	  (if (null-pointer-p value-ptr)
 	      nil
 	      (make-klist 
@@ -55,23 +56,23 @@ pointers in this structure with klist-free!"
 (defun store-object (db key value &key (mode :keep) (key-serializer #'serialize) 
 		     (value-serializer #'serialize))
   "Save a key / value pair in the specified kyoto cabinet store."
-  (format t "Storing ~A / ~A~%" key value)
+  ;;(format t "Storing ~A / ~A~%" key value)
   (handler-case
       (let (key-ptr key-size value-ptr value-size)
 	(unwind-protect
 	     (progn
 	       (multiple-value-setq (key-ptr key-size) (funcall key-serializer key))
 	       (multiple-value-setq (value-ptr value-size) (funcall value-serializer value))
-	       (dump-pointer key-ptr key-size)
-	       (dump-pointer value-ptr value-size)
+	       ;;(dump-pointer key-ptr key-size)
+	       ;;(dump-pointer value-ptr value-size)
 	       (with-transaction (db)
-		 (dbm-put-fast db key-ptr key-size value-ptr value-size :mode mode))
-	       (format t "Done storing ~A / ~A~%" key value))
+		 (dbm-put-fast db key-ptr key-size value-ptr value-size :mode mode)))
+	       ;;(format t "Done storing ~A / ~A~%" key value))
 	  (progn
-	    (format t "Releasing key ptr: ~A~%" (pointer-address key-ptr))
+	    ;;(format t "Releasing key ptr: ~A~%" (pointer-address key-ptr))
 	    (when (pointerp key-ptr) (kcfree key-ptr))
 	    (when (pointerp value-ptr)
-	      (format t "Releasing val ptr: ~A~%" (pointer-address value-ptr))
+	      ;;(format t "Releasing val ptr: ~A~%" (pointer-address value-ptr))
 	      (kcfree value-ptr)))))
     (error (condition)
       (error 'persistence-error 

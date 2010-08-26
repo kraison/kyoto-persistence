@@ -48,7 +48,7 @@
 
 (defmethod deserialize-subseq (pointer header-length data-length offset)
   (deserialize-help (mem-aref pointer :unsigned-char offset) 
-		    pointer header-length data-length))
+		    pointer (+ offset header-length) data-length))
 
 (defun deserialize-all-subseqs (pointer size &optional (offset 0))
   (cond ((= offset size)
@@ -82,8 +82,7 @@
 (defmethod deserialize-help ((become (eql +uuid+)) pointer header-length data-length)
   "Decode a UUID."
   (declare (type integer become))
-  (declare (ignore header-length data-length))
-  (values (uuid:pointer-to-uuid pointer 2) (+ header-length data-length)))
+  (values (uuid:pointer-to-uuid pointer header-length) (+ header-length data-length)))
 
 (defmethod serialize ((uuid uuid:uuid))
   "Encode a UUID."
@@ -353,7 +352,7 @@ the length of the object."
 				 ;;:count (+ 1 length-of-encoded-length total-length))))
 	     (sz (foreign-alloc :int :initial-element (+ 1 length-of-encoded-length total-length)))
 	     (vec (kyoto-persistence:kcmalloc sz)))
-	(format t "~A~%" serialized-items)
+	;;(format t "~A~%" serialized-items)
 	(setf (mem-aref vec :unsigned-char 0) +list+)
 	(dotimes (i length-of-encoded-length)
 	  (setf (mem-aref vec :unsigned-char (1+ i)) (aref encoded-length i)))
@@ -363,7 +362,7 @@ the length of the object."
 	      (setf (mem-aref vec :unsigned-char (+ i offset)) 
 		    (mem-aref (first item) :unsigned-char i)))
 	    (setq offset (+ offset (second item)))))
-	(format t "VEC: ~A / ~A~%" (+ 1 length-of-encoded-length total-length) vec)
+	;;(format t "VEC: ~A / ~A~%" (+ 1 length-of-encoded-length total-length) vec)
 	(dolist (i serialized-items)
 	  (when (pointerp (first i)) (kcfree (first i))))
 	(foreign-free sz)
@@ -382,7 +381,7 @@ the length of the object."
 	       (sz (foreign-alloc :int :initial-element 
 				  (+ 1 length-of-encoded-length total-length)))
 	       (vec (kyoto-persistence:kcmalloc sz)))
-	  (format t "~A~%" serialized-items)
+	  ;;(format t "~A~%" serialized-items)
 	  (setf (mem-aref vec :unsigned-char 0) +dotted-list+)
 	  (dotimes (i length-of-encoded-length)
 	    (setf (mem-aref vec :unsigned-char (1+ i)) (aref encoded-length i)))
@@ -392,7 +391,7 @@ the length of the object."
 		(setf (mem-aref vec :unsigned-char (+ i offset)) 
 		      (mem-aref (first item) :unsigned-char i)))
 	      (setq offset (+ offset (second item)))))
-	  (format t "VEC: ~A / ~A~%" (+ 1 length-of-encoded-length total-length) vec)
+	  ;;(format t "VEC: ~A / ~A~%" (+ 1 length-of-encoded-length total-length) vec)
 	  (dolist (i serialized-items)
 	    (when (pointerp (first i)) (kcfree (first i))))
 	  (foreign-free sz)

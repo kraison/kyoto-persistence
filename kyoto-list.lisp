@@ -55,7 +55,7 @@
       (multiple-value-bind (item record-size) 
 	  (deserialize-subseq (klist-pointer klist) 
 			      header-length
-			      data-length (klist-offset klist))
+			      data-length 0)
 	(declare (ignore record-size))
 	(let ((new-offset (+ data-length header-length)))
 	  (vector-push-extend item (klist-items klist))
@@ -91,8 +91,10 @@
 	  (loop 
 	     for item = (klist-nth klist count)
 	     while (not (null item)) do
+	       ;;(format t "got ~A~%" item)
 	       (push (funcall fn item) result)
 	       (incf count))
+	  ;;(format t "~A~%" (klist-items klist))
 	  (nreverse result))
 	(progn
 	  (loop 
