@@ -20,27 +20,32 @@
 key and value."
   (handler-case
       (let ((result nil) (cursor (iter-open phash)))
-	(iter-first cursor)
-	(loop
-	   (let (key-ptr key-size val-ptr val-size)
-	     (unwind-protect
-		  (progn
-		    (multiple-value-setq (key-ptr key-size val-ptr val-size) 
-		      (iter-item-fast cursor))
-		    (when (null-pointer-p key-ptr) (return))
-		    (let ((key (deserialize key-ptr (mem-ref key-size :int)))
-			  (val (deserialize val-ptr (mem-ref val-size :int))))
-		      (if collect?
-			  (push (funcall func key val) result)
-			  (funcall func key val)))
-		    (iter-next cursor))
-	       (progn
-		 (when (pointerp key-ptr) (kcfree key-ptr))
-		 (when (pointerp key-size) (kcfree key-size))
-		 ;; This is commented out because it causes a segfault.
-		 (when (pointerp val-ptr) (kcfree val-ptr))
-		 (when (pointerp val-size) (kcfree val-size))))))
-	(if collect? (nreverse result)))
+	(unwind-protect
+	     (progn
+	       (iter-first cursor)
+	       (loop
+		  (let (key-ptr key-size val-ptr val-size)
+		    (unwind-protect
+			 (progn
+			   (multiple-value-setq (key-ptr key-size val-ptr val-size) 
+			     (iter-item-fast cursor))
+			   (when (or (null key-ptr)
+				     (and (pointerp key-ptr) (null-pointer-p key-ptr))) 
+			     (return))
+			   (let ((key (deserialize key-ptr (mem-ref key-size :unsigned-int)))
+				 (val (deserialize (mem-ref val-ptr :pointer) 
+						   (mem-ref val-size :unsigned-int))))
+			     (if collect?
+				 (push (funcall func key val) result)
+				 (funcall func key val)))
+			   (iter-next cursor))
+		      (progn
+			(when (pointerp key-ptr) (kcfree key-ptr))
+			(when (pointerp key-size) (foreign-free key-size))
+			(when (pointerp val-ptr) (kcfree val-ptr))
+			(when (pointerp val-size) (foreign-free val-size))))))
+	       (if collect? (nreverse result)))
+	  (iter-close cursor)))
     (error (condition)
       (error 'persistence-error 
 	     :instance (list :db phash) :reason condition))))
