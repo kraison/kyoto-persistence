@@ -36,7 +36,8 @@
   :serial t
   :components ((:file "package")
                (:file "serialize-tests")
-               (:file "buffer-tests"))
+               (:file "buffer-tests")
+               (:file "phash-tests"))
   :perform (test-op (o c)
              (unless (uiop:symbol-call :fiveam :run! :kyoto-persistence)
                (error "kyoto-persistence tests failed"))))
