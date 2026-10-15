@@ -20,10 +20,10 @@
   (format stream "~%"))
 
 (defun pointer-deref-eql (p1 p2 len)
-  (dotimes (i len)
+  "True when the LEN bytes at P1 and P2 are equal."
+  (dotimes (i len t)
     (unless (= (mem-aref p1 :unsigned-char i) (mem-aref p2 :unsigned-char i))
-      (return-from pointer-deref-eql nil))
-    t))
+      (return-from pointer-deref-eql nil))))
   
 (defun extract-subseq (seq old-len seq1 rem-len)
   "Return a copy of a pointer sequence with a subsequence removed."
