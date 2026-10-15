@@ -34,50 +34,46 @@
   "Converts a uuid to a cffi pointer.  Caller must free the pointer!"
   (if type-specifier
       ;;(let ((array (cffi:foreign-alloc :unsigned-char :count 18)))
-      (let* ((sz (cffi:foreign-alloc :int :initial-element 18))
-	     (array (kyoto-cabinet-ffi:kcmalloc sz)))
-	(setf (cffi:mem-aref array :unsigned-char 0) type-specifier)
-	(setf (cffi:mem-aref array :unsigned-char 1) 16)
-	(with-slots 
-	      (time-low time-mid time-high-and-version clock-seq-and-reserved clock-seq-low node)
-	    uuid
-	  (loop for i from 3 downto 0
-	     do (setf (cffi:mem-aref array :unsigned-char (+ 2 (- 3 i))) 
-		      (ldb (byte 8 (* 8 i)) time-low)))
-	  (loop for i from 5 downto 4
-	     do (setf (cffi:mem-aref array :unsigned-char (+ 2 i)) 
-		      (ldb (byte 8 (* 8 (- 5 i))) time-mid)))
-	  (loop for i from 7 downto 6
-	     do (setf (cffi:mem-aref array :unsigned-char (+ 2 i)) 
-		      (ldb (byte 8 (* 8 (- 7 i))) time-high-and-version)))
-	  (setf (cffi:mem-aref array :unsigned-char (+ 2 8)) 
-		(ldb (byte 8 0) clock-seq-and-reserved))
-	  (setf (cffi:mem-aref array :unsigned-char (+ 2 9)) 
-		(ldb (byte 8 0) clock-seq-low))
-	  (loop for i from 15 downto 10
-	     do (setf (cffi:mem-aref array :unsigned-char (+ 2 i)) 
-		      (ldb (byte 8 (* 8 (- 15 i))) node)))
-	  (cffi:foreign-free sz)
-	  (values array 18)))
+      (let* ((array (kyoto-cabinet-ffi:kcmalloc 18)))
+        (setf (cffi:mem-aref array :unsigned-char 0) type-specifier)
+        (setf (cffi:mem-aref array :unsigned-char 1) 16)
+        (with-slots 
+              (time-low time-mid time-high-and-version clock-seq-and-reserved clock-seq-low node)
+            uuid
+          (loop for i from 3 downto 0
+             do (setf (cffi:mem-aref array :unsigned-char (+ 2 (- 3 i))) 
+                      (ldb (byte 8 (* 8 i)) time-low)))
+          (loop for i from 5 downto 4
+             do (setf (cffi:mem-aref array :unsigned-char (+ 2 i)) 
+                      (ldb (byte 8 (* 8 (- 5 i))) time-mid)))
+          (loop for i from 7 downto 6
+             do (setf (cffi:mem-aref array :unsigned-char (+ 2 i)) 
+                      (ldb (byte 8 (* 8 (- 7 i))) time-high-and-version)))
+          (setf (cffi:mem-aref array :unsigned-char (+ 2 8)) 
+                (ldb (byte 8 0) clock-seq-and-reserved))
+          (setf (cffi:mem-aref array :unsigned-char (+ 2 9)) 
+                (ldb (byte 8 0) clock-seq-low))
+          (loop for i from 15 downto 10
+             do (setf (cffi:mem-aref array :unsigned-char (+ 2 i)) 
+                      (ldb (byte 8 (* 8 (- 15 i))) node)))
+          (values array 18)))
       ;;(let ((array (cffi:foreign-alloc :unsigned-char :count 16)))
-      (let* ((sz (cffi:foreign-alloc :int :initial-element 16))
-	     (array (kyoto-cabinet-ffi:kcmalloc sz)))
-	(with-slots 
-	      (time-low time-mid time-high-and-version clock-seq-and-reserved clock-seq-low node)
-	    uuid
-	  (loop for i from 3 downto 0
-	     do (setf (cffi:mem-aref array :unsigned-char (- 3 i)) (ldb (byte 8 (* 8 i)) time-low)))
-	  (loop for i from 5 downto 4
-	     do (setf (cffi:mem-aref array :unsigned-char i) (ldb (byte 8 (* 8 (- 5 i))) time-mid)))
-	  (loop for i from 7 downto 6
-	     do (setf (cffi:mem-aref array :unsigned-char i) 
-		      (ldb (byte 8 (* 8 (- 7 i))) time-high-and-version)))
-	  (setf (cffi:mem-aref array :unsigned-char 8) (ldb (byte 8 0) clock-seq-and-reserved))
-	  (setf (cffi:mem-aref array :unsigned-char 9) (ldb (byte 8 0) clock-seq-low))
-	  (loop for i from 15 downto 10
-	     do (setf (cffi:mem-aref array :unsigned-char i) (ldb (byte 8 (* 8 (- 15 i))) node)))
-	  (cffi:foreign-free sz)
-	  (values array 16)))))
+      (let* ((array (kyoto-cabinet-ffi:kcmalloc 16)))
+        (with-slots 
+              (time-low time-mid time-high-and-version clock-seq-and-reserved clock-seq-low node)
+            uuid
+          (loop for i from 3 downto 0
+             do (setf (cffi:mem-aref array :unsigned-char (- 3 i)) (ldb (byte 8 (* 8 i)) time-low)))
+          (loop for i from 5 downto 4
+             do (setf (cffi:mem-aref array :unsigned-char i) (ldb (byte 8 (* 8 (- 5 i))) time-mid)))
+          (loop for i from 7 downto 6
+             do (setf (cffi:mem-aref array :unsigned-char i) 
+                      (ldb (byte 8 (* 8 (- 7 i))) time-high-and-version)))
+          (setf (cffi:mem-aref array :unsigned-char 8) (ldb (byte 8 0) clock-seq-and-reserved))
+          (setf (cffi:mem-aref array :unsigned-char 9) (ldb (byte 8 0) clock-seq-low))
+          (loop for i from 15 downto 10
+             do (setf (cffi:mem-aref array :unsigned-char i) (ldb (byte 8 (* 8 (- 15 i))) node)))
+          (values array 16)))))
 
 (defmacro marr-to-bytes (from to array)
   "Helper macro used in pointer-to-uuid."
