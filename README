@@ -1,0 +1,24 @@
+kyoto-persistence
+=================
+
+Persistent Lisp data on Kyoto Cabinet: hash stores (phash), tree stores
+with duplicate-value lists (btree, klist), and the serializer that
+encodes Lisp values as bytes. Built on cl-kyoto-cabinet.
+
+Limits: timestamps before 1900 are not supported; the integer encoding
+holds up to 255 bytes of magnitude.
+
+Testing
+-------
+
+Needs Kyoto Cabinet (tested with 1.2.80), SBCL, Quicklisp, and a
+cl-kyoto-cabinet checkout beside this one. From this directory:
+
+  sbcl --non-interactive --load ~/quicklisp/setup.lisp \
+    --eval '(push (truename "../cl-kyoto-cabinet/") asdf:*central-registry*)' \
+    --eval '(push (truename "./") asdf:*central-registry*)' \
+    --eval '(ql:quickload :kyoto-persistence/test)' \
+    --eval '(asdf:test-system :kyoto-persistence)'
+
+The process exits non-zero if any test fails. Run the suite in its own
+process: a memory fault in foreign code takes the whole Lisp down.
